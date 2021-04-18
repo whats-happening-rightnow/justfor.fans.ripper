@@ -17,7 +17,7 @@
     2.  Select performer's page
     3.  (in Chrome), hit F12 to open dev-console
     4.  Refresh page to view network activity
-    5.  Locate getPost.php call, extract `UserID` and `UserHash4` values (in yellow)
+    5.  Locate `getPost.php` call, extract `UserID` and `UserHash4` values (in yellow)
     6.  Pass in as params when running script
         * `python app.py [UserID] [UserHash]`
 
