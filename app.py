@@ -1,9 +1,12 @@
 import os
+import shutil
 import sys
 import json
 import config
 import requests
 import urllib.request
+import re
+from pySmartDL import SmartDL
 
 from bs4 import BeautifulSoup
 
@@ -11,6 +14,7 @@ from Class.JJFPost import JJFPost
 
 def create_folder(tpost):
     fpath = os.path.join(config.save_path, tpost.name, tpost.type)
+    # fpath = os.path.join(config.save_path, re.sub('\W', '', tpost.name), tpost.type)
 
     if not os.path.exists(fpath):
         os.makedirs(fpath)
@@ -52,7 +56,18 @@ def photo_save(ppost):
     
     for img in photos_url:
         print(f'p: {img[0]}')
-        urllib.request.urlretrieve(img[1], img[0])
+        print(img[1])
+        # urllib.request.urlretrieve(img[1], img[0])
+
+        # obj = SmartDL(img[1], img[0])
+        # obj.start()
+        # print("Done: " + obj.get_dest())
+
+        response = requests.get(img[1], stream=True)
+        with open(img[0], 'wb') as out_file:
+            shutil.copyfileobj(response.raw, out_file)
+        del response
+
 
 def video_save(vpost):
     vpost.ext = 'mp4'
@@ -65,14 +80,29 @@ def video_save(vpost):
         print(f'v: <<exists skip>>: {vpath}')
         return
 
-    vidurljumble = vpost.post_soup.select('div.videoBlock a')[0].attrs['onclick']
-    vidurl = json.loads(vidurljumble.split(', ')[1])
+    # print(vpost.post_soup)
+    try:
+        vidurljumble = vpost.post_soup.select('div.videoBlock a')[0].attrs['onclick']
+        vidurl = json.loads(vidurljumble.split(', ')[1])
 
-    vpost.url_vid = vidurl.get('1080p', '')
-    vpost.url_vid = vidurl.get('540p', '') if vpost.url_vid == '' else vpost.url_vid
+        vpost.url_vid = vidurl.get('1080p', '')
+        vpost.url_vid = vidurl.get('540p', '') if vpost.url_vid == '' else vpost.url_vid
 
-    print(f'v: {vpath}')
-    urllib.request.urlretrieve(vpost.url_vid, vpath)
+        print(f'v: {vpath}')
+        print(vpost.url_vid)
+        # urllib.request.urlretrieve(vpost.url_vid, vpath)
+
+        # obj = SmartDL(vpost.url_vid, vpath)
+        # obj.start()
+        # print("Done: " + obj.get_dest())
+
+        response = requests.get(vpost.url_vid, stream=True)
+        with open(vpath, 'wb') as out_file:
+            shutil.copyfileobj(response.raw, out_file)
+        del response
+
+    except Exception as e:
+        print(e)
 
 def text_save(tpost):
     tpost.ext = 'txt'
@@ -91,21 +121,30 @@ def parse_and_get(html_text):
     soup = BeautifulSoup(html_text, 'html.parser')
 
     # name
-    name = soup.select('h5.mbsc-card-title.mbsc-bold span')[0].text
-    # date
-    post_date = soup.select('div.mbsc-card-subtitle')[0].text.strip()
+    # name = soup.select('h5.mbsc-card-title.mbsc-bold span')[0].text
+    # print(name)
+    # print(soup.select('h5.mbsc-card-title.mbsc-bold span')[0].get("onclick").lstrip("location.href='/").rstrip("'"))
+    # # date
+    # post_date = soup.select('div.mbsc-card-subtitle')[0].text.strip()
+    # print("post_date: " + post_date)
 
     for pp in soup.select('div.mbsc-card.jffPostClass'):
-        
+
+        # print("date")
+        # print(pp.select('div.mbsc-card-subtitle')[0].text.strip())
+
         ptext = pp.select('div.fr-view')
 
         thispost = JJFPost()
         thispost.post_soup = pp
-        thispost.name = name
-        thispost.post_date_str = post_date.strip()
+        thispost.name = pp.select('h5.mbsc-card-title.mbsc-bold span')[0].get("onclick").lstrip("location.href='/").rstrip("'")
+        thispost.post_date_str = pp.select('div.mbsc-card-subtitle')[0].text.strip().strip()
         thispost.post_id = pp.attrs['id']
         thispost.full_text = ptext[0].text.strip() if ptext else ''
         thispost.prepdata()
+
+        print(thispost.name)
+        print(thispost.post_date_str)
 
         classvals = pp.attrs['class']
         
@@ -132,6 +171,7 @@ def parse_and_get(html_text):
 
 if __name__ == "__main__":
 
+
     uid = sys.argv[1]
     hsh = sys.argv[2]
 
@@ -142,6 +182,7 @@ if __name__ == "__main__":
     while loopit:
 
         geturl = api_url.format(userid=uid, seq=loopct, hash=hsh)
+        print(geturl)
         html_text = requests.get(geturl).text
 
         if 'as sad as you are' in html_text:
