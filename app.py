@@ -2,6 +2,9 @@ import os
 import shutil
 import sys
 import json
+import time
+import random
+
 import config
 import requests
 # import urllib.request
@@ -129,6 +132,8 @@ def parse_and_get(html_text):
     # print("post_date: " + post_date)
 
     for pp in soup.select('div.mbsc-card.jffPostClass'):
+
+        time.sleep(random.randint(1, 2))
 
         # print("date")
         # print(pp.select('div.mbsc-card-subtitle')[0].text.strip())
