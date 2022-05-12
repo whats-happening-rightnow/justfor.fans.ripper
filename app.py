@@ -66,10 +66,13 @@ def photo_save(ppost):
         # obj.start()
         # print("Done: " + obj.get_dest())
 
-        response = requests.get(img[1], stream=True)
-        with open(img[0], 'wb') as out_file:
-            shutil.copyfileobj(response.raw, out_file)
-        del response
+        try:
+            response = requests.get(img[1], stream=True)
+            with open(img[0], 'wb') as out_file:
+                shutil.copyfileobj(response.raw, out_file)
+            del response
+        except Exception as e:
+            print(e)
 
 
 def video_save(vpost):
@@ -187,7 +190,7 @@ if __name__ == "__main__":
     while loopit:
 
         geturl = api_url.format(userid=uid, seq=loopct, hash=hsh)
-        print(geturl)
+        # print(geturl)
         html_text = requests.get(geturl).text
 
         if 'as sad as you are' in html_text:
