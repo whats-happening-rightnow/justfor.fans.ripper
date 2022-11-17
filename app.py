@@ -36,7 +36,13 @@ def photo_save(ppost):
 
     for img in photos_img:
 
-        imgsrc = img.attrs['src']
+        if 'src' in img.attrs:
+            imgsrc = img.attrs['src']
+        elif 'data-lazy' in img.attrs:
+            imgsrc = img.attrs['data-lazy']
+        else:
+            print("no image source, skipping")
+            continue
         ext = imgsrc.split('.')[-1]
         
         ppost.photo_seq = ii
