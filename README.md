@@ -4,7 +4,7 @@
 
 1. Install requirements
     1. `pip install -r requirements.txt`
-    2. Install [yt-dlp](https://github.com/yt-dlp/yt-dlp) and [ffmpeg](https://ffmpeg.org).
+    2. Install [ffmpeg](https://ffmpeg.org).
 2. Set configuration
     1. `overwrite_existing` - will skip download if file exists
     2. `save_path` - destination folder - will save to same location as script folder if none provided
