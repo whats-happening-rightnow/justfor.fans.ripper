@@ -2,7 +2,9 @@
 
 ### Written in Python 3.8
 
-1. Install requirements: `pip install -r requirements.txt`
+1. Install requirements
+    1. `pip install -r requirements.txt`
+    2. Install [ffmpeg](https://ffmpeg.org).
 2. Set configuration
     1. `overwrite_existing` - will skip download if file exists
     2. `save_path` - destination folder - will save to same location as script folder if none provided

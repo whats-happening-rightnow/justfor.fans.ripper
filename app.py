@@ -1,153 +1,203 @@
-import os
 import sys
-import json
-import config
+import os
+import shutil
 import requests
-import urllib.request
-
+import time
+import random
+import json
+import subprocess
+from yt_dlp import YoutubeDL
 from bs4 import BeautifulSoup
+from pathlib import Path
 
+
+import config
 from Class.JJFPost import JJFPost
 
-def create_folder(tpost):
-    fpath = os.path.join(config.save_path, tpost.name, tpost.type)
+def create_directory_for_post(post):
+    """
+    This function creates a directory structure where to save the downloaded content.
+    """
+    folder_path = os.path.join(config.save_path, post.name, post.type)
 
-    if not os.path.exists(fpath):
-        os.makedirs(fpath)
-    
-    return fpath
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
 
-def photo_save(ppost):
-    ii = 1
-    photos_url = []
+    return folder_path
 
-    photos_img = ppost.post_soup.select('div.imageGallery.galleryLarge img.expandable')
+def save_photo(post):
+    """
+    This function is responsible for downloading and saving the photos.
+    """
+    photo_counter = 1
+    photo_urls = []
 
-    if len(photos_img) == 0:
-        ii = -1
-        photos_img.append(ppost.post_soup.select('img.expandable')[0])
+    photos = post.post_soup.select('div.imageGallery.galleryLarge img.expandable')
 
-    for img in photos_img:
+    if len(photos) == 0:
+        photo_counter = -1
+        photos.append(post.post_soup.select('img.expandable')[0])
 
-        imgsrc = img.attrs['src']
-        ext = imgsrc.split('.')[-1]
-        
-        ppost.photo_seq = ii
-        ppost.ext = ext
-        ppost.prepdata()
+    for img in photos:
+        img_source = img.attrs.get('src', img.attrs.get('data-lazy', None))
 
-        folder = create_folder(ppost)
-        ppath = os.path.join(folder, ppost.title)
-
-        if not config.overwrite_existing and os.path.exists(ppath):
-            print(f'p: <<exists skip>>: {ppath}')
-            ii += 1
+        if img_source is None:
+            print("no image source, skipping")
             continue
 
-        photos_url.append([
-            ppath, imgsrc
-        ])
+        extension = img_source.split('.')[-1]
 
-        ii += 1
-    
-    for img in photos_url:
-        print(f'p: {img[0]}')
-        urllib.request.urlretrieve(img[1], img[0])
+        post.photo_seq = photo_counter
+        post.ext = extension
+        post.prepdata()
 
-def video_save(vpost):
-    vpost.ext = 'mp4'
-    vpost.prepdata()
+        folder = create_directory_for_post(post)
+        file_path = os.path.join(folder, post.title)
 
-    folder = create_folder(vpost)
-    vpath = os.path.join(folder, vpost.title)
+        if not config.overwrite_existing and os.path.exists(file_path):
+            print(f'Photo: <<exists skip>>: {file_path}')
+            photo_counter += 1
+            continue
 
-    if not config.overwrite_existing and os.path.exists(vpath):
-        print(f'v: <<exists skip>>: {vpath}')
+        photo_urls.append([file_path, img_source])
+
+        photo_counter += 1
+
+    for img in photo_urls:
+        download_file(img[0], img[1])  # Use a function to download the file, for better code readability
+
+def add_metadata_to_video(video_path, title, artist, date, description):
+    print(f'Adding metadata to: {video_path}')
+    metadata_command = [
+        'ffmpeg',
+        '-i', video_path,  # input file
+        '-metadata', f'title={title}',
+        '-metadata', f'artist={artist}',
+        '-metadata', f'date={date}',
+        '-metadata', f'description={description}',
+        '-codec', 'copy',  # don't re-encode video or audio
+        video_path+'.tmp.mp4'  # output file
+    ]
+    subprocess.run(metadata_command)
+    os.remove(video_path)
+    os.rename(video_path+'.tmp.mp4', video_path)
+
+def download_file(file_path, url):
+    """
+    This function downloads a file and saves it to the specified location.
+    """
+    print(f'Downloading: {file_path}')
+    print(f'From: {url}')
+
+    try:
+        response = requests.get(url, stream=True)
+        with open(file_path, 'wb') as out_file:
+            shutil.copyfileobj(response.raw, out_file)
+        del response
+    except Exception as e:
+        print(e)
+
+def save_video(post):
+    """
+    This function is responsible for downloading and saving the videos.
+    """
+    post.ext = 'mp4'
+    post.prepdata()
+
+    folder = create_directory_for_post(post)
+    file_path = os.path.join(folder, post.title)
+
+
+    if not config.overwrite_existing and os.path.exists(file_path):
+        print(f'Video: <<exists skip>>: {file_path}')
+
         return
 
-    vidurljumble = vpost.post_soup.select('div.videoBlock a')[0].attrs['onclick']
-    vidurl = json.loads(vidurljumble.split(', ')[1])
+    try:
+        video_url_data = post.post_soup.select('div.videoBlock a')[0].attrs['onclick']
+        video_url = json.loads(video_url_data.split(', ')[1])
 
-    vpost.url_vid = vidurl.get('1080p', '')
-    vpost.url_vid = vidurl.get('540p', '') if vpost.url_vid == '' else vpost.url_vid
+        post.url_vid = video_url.get('1080p', video_url.get('540p', ''))
 
-    print(f'v: {vpath}')
-    urllib.request.urlretrieve(vpost.url_vid, vpath)
+        ydl_opts = {
+            'outtmpl': file_path,
+        }
+        with YoutubeDL(ydl_opts) as ydl:
+            ydl.download([post.url_vid])  # download() expects a list of URLs.
 
-def text_save(tpost):
-    tpost.ext = 'txt'
-    tpost.prepdata()
+    except Exception as e:
+        print(e)
 
-    folder = create_folder(tpost)
-    tpath = os.path.join(folder, tpost.title)
 
-    print(f't: {tpath}')
+def save_text(post):
+    """
+    This function is responsible for saving the text of the post.
+    """
+    post.ext = 'txt'
+    post.prepdata()
 
-    text_file = open(tpath, "w", encoding='utf-8')
-    text_file.write(tpost.full_text)
-    text_file.close()
+    folder = create_directory_for_post(post)
+    file_path = os.path.join(folder, post.title)
 
-def parse_and_get(html_text):
-    soup = BeautifulSoup(html_text, 'html.parser')
+    print(f'Text: {file_path}')
 
-    # name
-    name = soup.select('h5.mbsc-card-title.mbsc-bold span')[0].text
-    # date
-    post_date = soup.select('div.mbsc-card-subtitle')[0].text.strip()
+    with open(file_path, "w", encoding='utf-8') as text_file:  # Use a with statement to handle the file open/close.
+        text_file.write(post.full_text)
 
-    for pp in soup.select('div.mbsc-card.jffPostClass'):
-        
-        ptext = pp.select('div.fr-view')
+def parse_and_save_content(html_content):
+    """
+    This function parses the HTML content, extracts the information of the post and downloads/saves the related content.
+    """
+    soup = BeautifulSoup(html_content, 'html.parser')
 
-        thispost = JJFPost()
-        thispost.post_soup = pp
-        thispost.name = name
-        thispost.post_date_str = post_date.strip()
-        thispost.post_id = pp.attrs['id']
-        thispost.full_text = ptext[0].text.strip() if ptext else ''
-        thispost.prepdata()
+    for post_element in soup.select('div.mbsc-card.jffPostClass'):
+        time.sleep(random.randint(1, 2))  # Random delay to prevent being flagged as a bot.
 
-        classvals = pp.attrs['class']
-        
-        if 'video' in classvals:
-            thispost.type = 'video'
-            video_save(thispost)
+        post = JJFPost()
+        post.post_soup = post_element
+        post.name = post_element.select('h5.mbsc-card-title.mbsc-bold span')[0].get("onclick").lstrip("location.href='/").rstrip("'")
+        post.post_date_str = post_element.select('div.mbsc-card-subtitle')[0].text.strip()
+        post.post_id = post_element.attrs['id']
+        post.full_text = post_element.select('div.fr-view')[0].text.strip() if post_element.select('div.fr-view') else ''
+        post.prepdata()
+
+        print(post.name)
+        print(post.post_date_str)
+
+        class_values = post_element.attrs['class']
+
+        if 'video' in class_values:
+            post.type = 'video'
+            save_video(post)
+            folder = create_directory_for_post(post)
+            file_path = os.path.join(folder, post.title)
+            add_metadata_to_video(file_path, post.title, post.name, post.post_date, post.full_text)
 
             if config.save_full_text:
-                #thispost.type = 'text'
-                text_save(thispost)
-
-        elif 'photo' in classvals:
-            thispost.type = 'photo'
-            photo_save(thispost)
-
+                save_text(post)
+        elif 'photo' in class_values:
+            post.type = 'photo'
+            save_photo(post)
             if config.save_full_text:
-                #thispost.type = 'text'
-                text_save(thispost)
-                
-        elif 'text' in classvals:
+                save_text(post)
+        elif 'text' in class_values:
             if config.save_full_text:
-                thispost.type = 'text'
-                text_save(thispost)
+                post.type = 'text'
+                save_text(post)
 
 if __name__ == "__main__":
-
-    uid = sys.argv[1]
-    hsh = sys.argv[2]
+    user_id = sys.argv[1]
+    hash_value = sys.argv[2]
 
     api_url = config.api_url
 
-    loopit = True
-    loopct = 0
-    while loopit:
+    loop_count = 0
+    while True:
+        formatted_url = api_url.format(userid=user_id, seq=loop_count, hash=hash_value)
+        html_content = requests.get(formatted_url).text
 
-        geturl = api_url.format(userid=uid, seq=loopct, hash=hsh)
-        html_text = requests.get(geturl).text
-
-        if 'as sad as you are' in html_text:
-            loopit = False
+        if 'as sad as you are' in html_content:
+            break
         else:
-            parse_and_get(html_text)
-            loopct += 10
-
-
+            parse_and_save_content(html_content)
+            loop_count += 10
