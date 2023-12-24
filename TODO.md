@@ -1,0 +1,11 @@
+- remove yt-dlp.exe and use system version instead (so it works on Windows + Mac + Linux)
+- stop writing out text for pinned and shoutouts and pay posts
+- rip paid posts if they've been paid for (will need working example)
+- log errors to a file in the current working folder so we know which posts failed
+- picture series are not using the longer filename structure
+- legacy rename script:
+    - depending on environment, write either bash script or batch file (currently only latter)
+    - short filenames are detected as legacy filenames so the log entry is wrong, and an unnecessary legacy rename script is written
+    - picture series are not writing to legacy rename script
+- make console log nicer (clean up or offer debug levels, use colours etc)
+- is there a way to make yt-dlp download faster?
