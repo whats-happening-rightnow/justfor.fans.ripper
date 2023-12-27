@@ -11,7 +11,9 @@ Written in Python 3.8 and working against JustFor.Fans as 20231224.
 ## Install
 
 1. Install requirements: `pip install -r requirements.txt`
-2. Optional: set configuration (defaults are fine)
+2. Download `yt-dlp.exe` from https://github.com/yt-dlp/yt-dlp (see their releases page) and put that file in the same folder as `app.py`.
+    - If you're running on a different platform, you'll need to update `app.py` to use your binary instead of `yt-dlp.exe`. Compatibility with other platforms has not been checked.
+3. Optional: set configuration (defaults are fine)
     1. `overwrite_existing` - will skip download if file exists
     2. `save_path` - destination folder - will save to same location as script folder if none provided
     3. `save_full_text` - will save text file with full description
