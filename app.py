@@ -17,6 +17,7 @@ from bs4 import BeautifulSoup
 
 from Class.JFFPost import JFFPost
 
+# thanks to https://www.programcreek.com/python/?code=NelisW%2Fpyradi%2Fpyradi-master%2Fpyradi%2Fryfiles.py
 def cleanFilename(sourcestring,  removestring ="\/:*?\"<>|"):
     """Clean a string by removing selected characters.
 
@@ -34,12 +35,11 @@ def cleanFilename(sourcestring,  removestring ="\/:*?\"<>|"):
     Raises:
         | No exception is raised.
     """
-    #remove the undesireable characters
+    # remove the undesireable characters
     return ''.join([c for c in sourcestring if c not in removestring])
 
 def create_folder(tpost):
     fpath = os.path.join(config.save_path, tpost.name, tpost.type)
-    # fpath = os.path.join(config.save_path, re.sub('\W', '', tpost.name), tpost.type)
 
     if not os.path.exists(fpath):
         os.makedirs(fpath)
@@ -122,12 +122,6 @@ def photo_save(ppost):
     
     for img in photos_url:
         print(f'p: {img[0]}', flush=True)
-        # print(img[1], flush=True)
-        # urllib.request.urlretrieve(img[1], img[0])
-
-        # obj = SmartDL(img[1], img[0])
-        # obj.start()
-        # print("Done: " + obj.get_dest())
 
         try:
             # always delay between picture download calls
@@ -166,54 +160,26 @@ def video_save(vpost):
         skip_next_network_request_delay = True
         return
 
-    # print(vpost.post_soup, flush=True)
     try:
         skip_next_network_request_delay = False
-        # print('here1', flush=True)
-        # debug why this is return a len of 0. can we print the html content somehow
-        # also add some print lines to tell the user what's going on during the slow startup
-        # print(len(vpost.post_soup.select('div.videoBlock a')), flush=True)
-        # print(vpost.post_soup.select('div.videoBlock'), flush=True)
-        # print(str(vpost.post_soup.select('div.videoBlock')), flush=True)
         vidurljumble = vpost.post_soup.select('div.videoBlock a')[0].attrs['onclick']
-        # print('here2', flush=True)
-        # print(len(vidurljumble.split(', ')), flush=True)
         vidurl = json.loads(vidurljumble.split(', ')[1])
-        # print('here3', flush=True)
 
         vpost.url_vid = vidurl.get('1080p', '')
         vpost.url_vid = vidurl.get('540p', '') if vpost.url_vid == '' else vpost.url_vid
 
         print(f'v: {vpath}', flush=True)
-        # print(vpost.url_vid, flush=True)
-        # urllib.request.urlretrieve(vpost.url_vid, vpath)
-
-        # obj = SmartDL(vpost.url_vid, vpath)
-        # obj.start()
-        # print("Done: " + obj.get_dest())
 
         response = requests.head(vpost.url_vid)
-
-        # print(response.headers['content-type'], flush=True)
-        # print(response.encoding, flush=True)
 
         if response.headers['content-type'].startswith('application/x-mpegurl'):
             # handle as a gzip'ed m3u8 file to be downloaded via yt-dlp
             print('Got gzip\'ed m3u8 file, passing to yt-dlp to save stream:', flush=True)
             response_m3u8 = requests.get(vpost.url_vid, stream=True)
             m3u8_path = vpath + '.m3u8'
-            # write bytes to file
-            # with open(vpath + '.temp1', 'wb') as out_file:
-            #     shutil.copyfileobj(response_m3u8.content, out_file)
             m3u8_file = open(m3u8_path, "wb")
             m3u8_file.write(response_m3u8.content)
             m3u8_file.close()
-            # print('m3u8 file written to ' + m3u8_path, flush=True)
-
-            # print(os.getcwd(), flush=True)
-            # print(pathlib.Path.cwd().drive, flush=True)
-            # print(pathlib.Path.cwd().parts, flush=True)
-            # print(pathlib.Path.cwd().relative_to(pathlib.Path.cwd().drive), flush=True)
 
             # generate a file protocol path we can use for yt-dlp. It allows file protocol paths, but only absolute
             # ones, except if it's on a window drive because the drive letter breaks it, so it has to be absolute to
@@ -285,18 +251,10 @@ def parse_and_get(html_text):
             print("parse_and_get: skipping pinned post", flush=True)
             continue
 
-        # print("date", flush=True)
-        # print(pp.select('div.mbsc-card-subtitle')[0].text.strip(), flush=True)
-
         ptext = pp.select('div.fr-view')
 
         thispost = JFFPost()
         thispost.post_soup = pp
-
-        # skip "whom to follow"
-
-        # jffPostClass video AccessControl-Subscribers mbsc-comp mbsc-card mbsc-form mbsc-no-touch mbsc-jffdark mbsc-ios mbsc-ltr
-        # jffPostClass donotremove                     mbsc-comp mbsc-card mbsc-form mbsc-no-touch mbsc-jffdark mbsc-ios mbsc-ltr
 
         namespan = pp.select('h5.mbsc-card-title.mbsc-bold span')
         if len(namespan) == 0:
@@ -311,9 +269,6 @@ def parse_and_get(html_text):
         thispost.post_id = pp.attrs['id']
         thispost.full_text = ptext[0].text.strip() if ptext else ''
         thispost.prepdata()
-
-        # print(thispost.name, flush=True)
-        # print(thispost.post_date_str, flush=True)
 
         classvals = pp.attrs['class']
         
@@ -354,7 +309,6 @@ if __name__ == "__main__":
 
     while loopit:
         geturl = api_url.format(userid=uid, posterid=pid, seq=loopct, hash=hsh)
-        # print(geturl, flush=True)
 
         # always delay between pagination calls
         time.sleep(random.randint(1, 2))
