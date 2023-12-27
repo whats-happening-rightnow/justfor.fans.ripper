@@ -147,8 +147,6 @@ def video_save(vpost):
     vpath_legacy = os.path.join(folder, cleanFilename(vpost.title_legacy))
     vpath = os.path.join(folder, cleanFilename(vpost.title))
 
-    print(vpath_legacy, flush=True)
-
     if not config.overwrite_existing and os.path.exists(vpath_legacy):
         print(f'v: <<exists skip (legacy filename)>>: {vpath_legacy}', flush=True)
         append_to_legacy_rename_script_file(folder, vpath_legacy, vpath)
@@ -186,8 +184,6 @@ def video_save(vpost):
             # the current drive, sigh. The actual usuable value is something like `file:///downloads/blah%2Ething.m3u8`
             full_dir_path = os.path.dirname(pathlib.Path.cwd().joinpath(vpath))
             file_protocol_path = 'file://' + urllib.parse.quote(str(pathlib.Path(full_dir_path).relative_to(pathlib.Path.cwd().drive)).replace('\\', '/') + '/' + pathlib.Path(m3u8_path).parts[-1])
-
-            print(full_dir_path + '/%(title)s.%(ext)s', flush=True)
 
             cmd = 'yt-dlp.exe -o "' + full_dir_path + '/%(title)s" --retries "infinite" --fragment-retries "infinite" --windows-filenames --no-overwrites --enable-file-urls "' + file_protocol_path + '"'
             os.system(cmd)
@@ -322,5 +318,3 @@ if __name__ == "__main__":
         else:
             parse_and_get(html_text)
             loopct += 10
-
-
