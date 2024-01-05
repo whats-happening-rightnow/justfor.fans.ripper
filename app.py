@@ -237,6 +237,11 @@ def parse_and_get(html_text):
         # reset the delay back to default
         skip_next_network_request_delay = False
 
+        # ignore playlist posts but they're just duplicates of other content
+        if "playlist" in pp['class']:
+            print("parse_and_get: skipping playlist post", flush=True)
+            continue
+
         # ignore pinned posts but they're just duplicates of other content (and their HTML follows a slightly different format)
         if len(pp.select('.pinnedNotice')) > 0:
             print("parse_and_get: skipping pinned post", flush=True)

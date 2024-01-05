@@ -2,9 +2,9 @@
 
 ## Overview
 
-Thing to download all content from someone's JustFor.Fans. Not that you _do_ need to be subscribed to their account, and unless their account is free then that means paying for it.
+Thing to download all content from someone's JustFor.Fans. Please note that you _do_ need to be subscribed to their account, and unless their account is free then that means paying for it.
 
-Please do not contact any developers about downloading content without paying, or attempting to circumvent payment.
+Please do not contact any developers about downloading content without paying or attempting to circumvent payment.
 
 Written in Python 3.8 and working against JustFor.Fans as 20231224.
 
