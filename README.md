@@ -46,7 +46,7 @@ You'll need the UserID, PostedID, and UserHash4 values from your JustFor.Fans ac
 
 * Existing files will be skipped (so if you've had to stop ripping, you can resume without downloading everything again)
 * An older version of this script saved to shorter filenames, but this version will attempt to write longer ones. If you already have the file with a shorter name it'll be detected, and a shell script/batch file will be written to the same folder to allow you to rename it to the longer version. No renaming will be performed automatically.
-* Pinned posts (posts also showing at the top of a user's feed), shoutout posts (other people's content being promoted), and paid posts (Pay-Per-View content) will be skipped.
+* Pinned posts (posts also showing at the top of a user's feed), shoutout posts (other people's content being promoted), paid posts (Pay-Per-View content), and playlist posts will be skipped.
 
 ## Warranty
 

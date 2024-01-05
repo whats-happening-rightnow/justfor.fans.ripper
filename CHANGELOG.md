@@ -2,7 +2,7 @@
 
 - 1.1.0
     - Updated script to handle current JustForFans HTML payload
-    - Fixed script halting on pinned posts, shoutout posts, and paid posts
+    - Fixed script halting on pinned posts, shoutout posts, paid posts, and playlist posts
     - Script now doesn't pause after detecting an existing saved file, so it'll be much faster to resume ripping
     - Image locations are now sampled from multiple places in the returned HTML for redundancy.
     - `yt-dlp` is used for video/audio streams that use m3u8.
