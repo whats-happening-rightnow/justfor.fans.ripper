@@ -114,6 +114,9 @@ venv.bak/
 .spyderproject
 .spyproject
 
+# VS Code settings
+.vscode
+
 # Rope project settings
 .ropeproject
 
@@ -127,3 +130,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# data
+photo
+text
+video
+
+# extra
+accounts.txt
+yt-dlp.exe
